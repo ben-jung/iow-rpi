@@ -5,20 +5,17 @@
 
 from adxl345 import ADXL345
 from math import sqrt
-from subprocess import call
+from subprocess import call, Popen
 import time
 import requests
 
 
 URL = 'http://admin.kaist.ac.kr:3535/get_data?'
-ID = '1'
+ID = '2'
 ON_OFF_STANDARD = 0.20
 SLEEP_DELAY = 0.1
 ACCUMULATED_NUMBER = 10
 ACCUMULATED_STANDARD = 5
-
-BLE_INIT = 'sudo hciconfig hci0 up\n sudo hciconfig leadv 3\n sudo hciconfig noscan'
-BLE_HALT = 'sudo hciconfig hci0 down'
 
 # Fixed hex
 BLE_HEX_FIXED_FORWARD = 'sudo hcitool -i hci0 cmd 0x08 0x0008 1E 02 01 1A 1A FF 4C 00 02 15 E2 0A 39 F4 73 F5 4B C4 A1 2F 17 D1 AD 07 A9 61 '
@@ -50,10 +47,10 @@ def check_onoff(adxl345):
 def send_state(state):
     if state:
         print "* Send running_state"
-        #r = requests.get(URL+'id='+ID+'&state=run')
+        r = requests.get(URL+'id='+ID+'&state=run')
     else:
         print "* Send idle_state"
-        #r = requests.get(URL+'id='+ID+'&state=idle')
+        r = requests.get(URL+'id='+ID+'&state=idle')
 
 def change_beacon_state(state):
     if state:
@@ -70,7 +67,7 @@ if __name__ == "__main__":
     is_running = False
     count = 0
 
-    call(BLE_INIT, shell=True)
+    Popen(['./scripts/init.sh'], shell=True)
     send_state(is_running)
     change_beacon_state(is_running)
 
@@ -89,5 +86,3 @@ if __name__ == "__main__":
                 is_running = False
                 send_state(is_running)
                 change_beacon_state(is_running)
-
-    call(BLE_HALT, shell=True)
