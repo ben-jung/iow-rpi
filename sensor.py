@@ -5,18 +5,19 @@
 
 from adxl345 import ADXL345
 from math import sqrt
-from subprocess import call, Popen
 import time
 import requests
 
 
 URL = 'http://admin.kaist.ac.kr:3535/get_data?'
-ID = '2'
-ON_OFF_STANDARD = 0.20
+ID = '1'
+ON_OFF_STANDARD = 0.12
 SLEEP_DELAY = 0.1
 ACCUMULATED_NUMBER = 10
-ACCUMULATED_STANDARD = 5
+ACCUMULATED_STANDARD = 10
 
+# Use BLE Beacon
+BLE_USED = False
 # Fixed hex
 BLE_HEX_FIXED_FORWARD = 'sudo hcitool -i hci0 cmd 0x08 0x0008 1E 02 01 1A 1A FF 4C 00 02 15 E2 0A 39 F4 73 F5 4B C4 A1 2F 17 D1 AD 07 A9 61 '
 # Major (Machine id)
@@ -25,6 +26,9 @@ BLE_HEX_MACHINE_ID = '00 0' + ID + ' '
 BLE_HEX_STATE_IDLE = '00 00 '
 BLE_HEX_STATE_RUN = '00 01 '
 BLE_HEX_FIXED_BACK = 'C8 00 '
+
+if BLE_USED:
+    from subprocess import call, Popen
 
 
 def check_onoff(adxl345):
@@ -67,9 +71,10 @@ if __name__ == "__main__":
     is_running = False
     count = 0
 
-    Popen(['./scripts/init.sh'], shell=True)
     send_state(is_running)
-    change_beacon_state(is_running)
+    if BLE_USED:
+        Popen(['./scripts/init.sh'], shell=True)
+        change_beacon_state(is_running)
 
     while True:
         if check_onoff(adxl345):
@@ -78,11 +83,13 @@ if __name__ == "__main__":
             if not is_running and count > ACCUMULATED_STANDARD:
                 is_running = True
                 send_state(is_running)
-                change_beacon_state(is_running)
+                if BLE_USED:
+                    change_beacon_state(is_running)
         else:
             if count > 0:
                 count -= 1
             if is_running and count < ACCUMULATED_STANDARD+1:
                 is_running = False
                 send_state(is_running)
-                change_beacon_state(is_running)
+                if BLE_USED:
+                    change_beacon_state(is_running)
